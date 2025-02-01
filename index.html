@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gelişmiş 2048 Oyunu (Toast Bildirimli)</title>
+  <title>Gelişmiş 2048 Oyunu (Bitir Butonlu, Eski Oyun Listesi)</title>
   <style>
     /* === Temel Tema Değişkenleri === */
     :root {
@@ -108,7 +108,7 @@
       height: var(--cell-size);
       border-radius: 5px;
     }
-    /* Taşların container’ı */
+    /* Taşların container’ı (sadece taşlar hareket eder) */
     #tile-container {
       position: absolute;
       top: 0;
@@ -171,6 +171,30 @@
       text-align: center;
       flex: 1;
     }
+    /* === Eski Oyunlar Listesi === */
+    #past-games {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 15px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      font-size: 14px;
+    }
+    #past-games h3 {
+      margin: 0 0 5px;
+      text-align: center;
+    }
+    #past-games ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #past-games li {
+      border-bottom: 1px solid #ddd;
+      padding: 4px 0;
+      display: flex;
+      justify-content: space-between;
+    }
     /* === Toast Bildirim Stilleri === */
     #toast-container {
       position: fixed;
@@ -201,7 +225,7 @@
 </head>
 <body>
   <h1>2048 Oyunu</h1>
-  <!-- Üst menü: Tema, grid boyutu ve zorluk seçimi -->
+  <!-- Üst menü: Tema, grid boyutu, zorluk seçimi, yeni oyun & oyunu bitir butonları -->
   <div id="top-bar">
     <button id="toggle-theme">Tema Değiştir</button>
     <div>
@@ -220,7 +244,10 @@
         <option value="hard">Zor</option>
       </select>
     </div>
-    <button id="startButton">Yeni Oyun</button>
+    <div>
+      <button id="startButton">Yeni Oyun</button>
+      <button id="endGameButton">Oyunu Bitir</button>
+    </div>
   </div>
 
   <!-- Skor Paneli -->
@@ -228,7 +255,7 @@
     <div>Skor: <span id="score">0</span></div>
     <div>Son Oyun: <span id="lastScore">0</span></div>
   </div>
-  <!-- Rekor Paneli: All-time, Aylık, Haftalık -->
+  <!-- Rekor Paneli: All-Time, Aylık, Haftalık, Günlük -->
   <div id="records-panel">
     <div>
       <strong>All-Time</strong>
@@ -242,6 +269,10 @@
       <strong>Haftalık</strong>
       <div id="weeklyRecord">0</div>
     </div>
+    <div>
+      <strong>Günlük</strong>
+      <div id="dailyRecord">0</div>
+    </div>
   </div>
 
   <!-- Oyun Alanı -->
@@ -253,27 +284,41 @@
   <!-- Toast Bildirim Container -->
   <div id="toast-container"></div>
 
+  <!-- Eski Oyunlar Listesi -->
+  <div id="past-games">
+    <h3>Geçmiş Oyunlar</h3>
+    <ul id="pastGamesList"></ul>
+  </div>
+
   <script>
     /* --- LocalStorage ile skor ve oyun durumunun yönetimi --- */
     const STORAGE_KEY_SCORES = 'gameScores';
     const STORAGE_KEY_STATE  = 'currentGameState';
+
     function loadScores() {
       const data = localStorage.getItem(STORAGE_KEY_SCORES);
       return data ? JSON.parse(data) : [];
     }
+
     function saveScore(score) {
       const scores = loadScores();
       scores.push({ score, time: Date.now() });
       localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(scores));
+      updatePastGamesUI();
     }
+
     function getRecords() {
       const scores = loadScores();
       const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
       const oneWeek = 7 * 24 * 60 * 60 * 1000;
       const oneMonth = 30 * 24 * 60 * 60 * 1000;
-      let allTime = 0, weekly = 0, monthly = 0;
+      let allTime = 0, daily = 0, weekly = 0, monthly = 0;
       scores.forEach(item => {
         allTime = Math.max(allTime, item.score);
+        if (now - item.time <= oneDay) {
+          daily = Math.max(daily, item.score);
+        }
         if (now - item.time <= oneWeek) {
           weekly = Math.max(weekly, item.score);
         }
@@ -281,14 +326,31 @@
           monthly = Math.max(monthly, item.score);
         }
       });
-      return { allTime, monthly, weekly };
+      return { allTime, daily, weekly, monthly };
     }
+
     function updateRecordsUI() {
       const rec = getRecords();
       document.getElementById('allTimeRecord').textContent = rec.allTime;
       document.getElementById('monthlyRecord').textContent = rec.monthly;
       document.getElementById('weeklyRecord').textContent = rec.weekly;
+      document.getElementById('dailyRecord').textContent = rec.daily;
     }
+
+    function updatePastGamesUI() {
+      const scores = loadScores();
+      const list = document.getElementById("pastGamesList");
+      list.innerHTML = "";
+      // En yeni skorları yukarıya getirecek şekilde sıralayalım
+      scores.sort((a, b) => b.time - a.time);
+      scores.forEach(item => {
+        const li = document.createElement("li");
+        const date = new Date(item.time);
+        li.textContent = `${date.toLocaleString()} - Skor: ${item.score}`;
+        list.appendChild(li);
+      });
+    }
+
     // --- Toast Bildirim Fonksiyonu ---
     function showToast(message) {
       const container = document.getElementById("toast-container");
@@ -296,7 +358,6 @@
       toast.className = "toast";
       toast.textContent = message;
       container.appendChild(toast);
-      // Bildirim animasyonları sayesinde otomatik olarak kaybolacaktır.
       setTimeout(() => {
         container.removeChild(toast);
       }, 3000);
@@ -315,6 +376,7 @@
         this.dragging = false;
         this.dragStart = null;
         this.currentDragOffset = { x: 0, y: 0 };
+        this.gameEnded = false;
         // Zorluk ayarları
         if (this.difficulty === 'easy') {
           this.startTiles = 2;
@@ -383,9 +445,8 @@
       }
       
       bindEvents() {
-        // Klavye kontrolleri
         document.addEventListener("keydown", (e) => {
-          if (this.dragging) return;
+          if (this.dragging || this.gameEnded) return;
           switch(e.key) {
             case "ArrowLeft":
             case "a":
@@ -411,7 +472,7 @@
         });
         // Dokunmatik hareket kontrolleri
         this.boardContainer.addEventListener("touchstart", (evt) => {
-          if (evt.touches.length !== 1) return;
+          if (evt.touches.length !== 1 || this.gameEnded) return;
           this.dragging = true;
           const touch = evt.touches[0];
           this.dragStart = { x: touch.clientX, y: touch.clientY };
@@ -421,7 +482,6 @@
           const touch = evt.touches[0];
           let dx = touch.clientX - this.dragStart.x;
           let dy = touch.clientY - this.dragStart.y;
-          // Yalnızca belirgin eksene göre hareket; maksimum 50px sınırla
           if (Math.abs(dx) > Math.abs(dy)) {
             dx = Math.max(Math.min(dx, 50), -50);
             dy = 0;
@@ -452,6 +512,7 @@
       }
       
       move(direction) {
+        if (this.gameEnded) return;
         this.previousBoard = JSON.parse(JSON.stringify(this.board));
         let moved = false;
         switch(direction) {
@@ -502,13 +563,13 @@
           this.updateScore();
           this.saveState();
           if (this.checkGameOver()) {
-            // Toast bildirim şeklinde "Oyun Bitti" mesajı verelim
             setTimeout(() => {
               showToast("Oyun Bitti! Skor: " + this.score);
               this.lastScoreEl.textContent = this.score;
               saveScore(this.score);
               updateRecordsUI();
               localStorage.removeItem(STORAGE_KEY_STATE);
+              this.gameEnded = true;
             }, 200);
           }
         }
@@ -587,6 +648,16 @@
         this.score = savedState.score;
         this.setupGrid();
       }
+      
+      endGame() {
+        if (this.gameEnded) return;
+        showToast("Oyunu Bitirdiniz! Skor: " + this.score);
+        this.lastScoreEl.textContent = this.score;
+        saveScore(this.score);
+        updateRecordsUI();
+        localStorage.removeItem(STORAGE_KEY_STATE);
+        this.gameEnded = true;
+      }
     }
 
     /* --- Başlat ve Tema Değiştirme İşlemleri --- */
@@ -624,6 +695,13 @@
     document.getElementById("startButton").addEventListener("click", () => {
       startNewGame();
     });
+    document.getElementById("endGameButton").addEventListener("click", () => {
+      if (game) {
+        game.endGame();
+      } else {
+        showToast("Oyun başlamamış!");
+      }
+    });
     document.getElementById("toggle-theme").addEventListener("click", () => {
       document.body.classList.toggle("dark-theme");
     });
@@ -631,6 +709,7 @@
     /* --- İlk Yüklemede: Eğer kayıtlı oyun varsa, kaldığınız yerden devam edelim --- */
     window.addEventListener("load", () => {
       updateRecordsUI();
+      updatePastGamesUI();
       const savedGame = localStorage.getItem(STORAGE_KEY_STATE);
       if (savedGame) {
         loadSavedGame();
