@@ -12,7 +12,7 @@
       padding: 0;
     }
 
-    /* --- Temel Renk & Tema Değişkenleri --- */
+    /* --- Temel Renk & Değişkenler --- */
     :root {
       --bg-color: #faf8ef;
       --text-color: #776e65;
@@ -20,7 +20,7 @@
       --grid-cell-bg: #cdc1b4;
       --gap: 10px;
       --anim-duration: 0.2s;
-      /* Taş renkleri */
+      /* Taş renkleri (Light Mode) */
       --tile-2: #eee4da;
       --tile-4: #ede0c8;
       --tile-8: #f2b179;
@@ -32,10 +32,13 @@
       --tile-512: #edc850;
       --tile-1024: #edc53f;
       --tile-2048: #edc22e;
-      /* Custom dropdown için */
+      /* Custom dropdown */
       --select-bg: #fff;
       --select-border: #ccc;
       --dropdown-zindex: 10;
+      /* Buton gradient */
+      --btn-gradient-start: #b18f7f;
+      --btn-gradient-end: #8f7a66;
     }
     .dark-theme {
       --bg-color: #181818;
@@ -44,9 +47,22 @@
       --grid-cell-bg: #4a4a4a;
       --select-bg: #444;
       --select-border: #666;
+      /* Dark mode için taş renkleri özellikle 2 ve 4 */
+      --tile-2: #3a3a3a;
+      --tile-4: #4a4a4a;
+      /* Diğer taşlar için de kontrastı biraz artırabilirsiniz: */
+      --tile-8: #f27c3d;
+      --tile-16: #f57c5f;
+      --tile-32: #f67c5f;
+      --tile-64: #f87a60;
+      --tile-128: #f9a170;
+      --tile-256: #fbb280;
+      --tile-512: #fdc490;
+      --tile-1024: #fed4a0;
+      --tile-2048: #ffdeaf;
     }
 
-    /* --- Genel Stil (Mobile First) --- */
+    /* --- Genel Stil --- */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: var(--bg-color);
@@ -64,7 +80,7 @@
       text-align: center;
     }
 
-    /* --- Üst Menü --- */
+    /* --- Üst Menü (Tek Satırda) --- */
     #top-bar {
       width: 100%;
       max-width: 500px;
@@ -74,19 +90,20 @@
       gap: 10px;
       margin-bottom: 15px;
     }
-    /* Tema toggle butonu – sadece ikon */
+    /* Tema toggle butonu: Sadece ikon */
     #themeToggle {
       background: none;
       border: none;
       cursor: pointer;
       padding: 4px;
     }
+    /* Modern, minimal ikonlar – SVG ile (sun ve moon) */
     #themeToggle svg {
       width: 24px;
       height: 24px;
       fill: var(--text-color);
     }
-    /* Custom dropdown stilleri */
+    /* Custom Dropdown Menü */
     .custom-dropdown {
       position: relative;
       border: 1px solid var(--select-border);
@@ -134,14 +151,26 @@
     .custom-dropdown .dropdown-options li:hover {
       background-color: var(--grid-cell-bg);
     }
-    /* Oyun butonları */
+    /* Oyun butonları – Yeni Oyun & Oyunu Bitir */
     .game-buttons {
       display: flex;
       gap: 5px;
       flex-shrink: 0;
     }
     .game-buttons button {
-      flex: none;
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: #fff;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .game-buttons button:hover {
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
     }
 
     /* --- Oyun Alanı --- */
@@ -173,7 +202,7 @@
       display: grid;
       gap: var(--gap);
     }
-    /* Tile-container: taşlar hareket ederken kayar; grid sabit */
+    /* Tile-container: Taşlar hareket ederken shift edilecek, grid sabit */
     #tile-container {
       top: var(--gap);
       left: var(--gap);
@@ -238,7 +267,6 @@
       margin-bottom: 10px;
       font-size: 1rem;
     }
-    /* En iyi skorlar (records) ızgara altına taşındı */
     #records-panel {
       width: 100%;
       max-width: 500px;
@@ -334,22 +362,22 @@
 <body>
   <h1>2048 Oyunu</h1>
 
-  <!-- Üst Menü: Tema toggle, custom dropdown’lar ve oyun butonları -->
+  <!-- Üst Menü: Tema toggle (ikon), custom dropdown’lar ve oyun butonları -->
   <div id="top-bar">
-    <!-- Tema toggle: İkon şeklinde -->
+    <!-- Tema toggle: modern sun/moon ikonları -->
     <button id="themeToggle" title="Tema Değiştir">
-      <!-- Başlangıçta light mode: sun ikonu -->
-      <svg id="sunIcon" viewBox="0 0 24 24">
-        <path d="M6.76 4.84l-1.8-1.79-1.42 1.41 1.79 1.8 1.43-1.42zm10.48 0l1.79-1.8-1.42-1.41-1.8 1.79 1.43 1.42zm-4.24-2.84h-2v3h2V2zm0 16h-2v3h2v-3zm8-7h3v2h-3v-2zm-16 0H2v2h3v-2zm12.07 4.93l1.79 1.8 1.42-1.41-1.8-1.79-1.41 1.4zm-8.14 0l-1.8 1.79 1.42 1.41 1.79-1.8-1.41-1.4zM12 8a4 4 0 100 8 4 4 0 000-8z"/>
+      <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5"/>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M17.36 17.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M17.36 6.64l1.42-1.42"/>
       </svg>
-      <svg id="moonIcon" viewBox="0 0 24 24" style="display:none;">
-        <path d="M9.37 5.51A7 7 0 0012 19a7 7 0 006.49-9.37 1 1 0 00-1.22-.71 1 1 0 00-.74.95 5 5 0 11-6.28-6.28 1 1 0 00-.95-.74 1 1 0 00-.71 1.22z"/>
+      <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display: none;">
+        <path d="M21 12.79A9 9 0 0112.21 3 7 7 0 0012 17a7 7 0 009-4.21z"/>
       </svg>
     </button>
 
     <!-- Grid seçim custom dropdown -->
     <div class="custom-dropdown" id="gridDropdown" data-type="grid">
-      <span class="selected-option">4×4</span>
+      <span class="selected-option" data-value="4">4×4</span>
       <span class="chevron">&#9662;</span>
       <ul class="dropdown-options">
         <li data-value="3">3×3</li>
@@ -360,7 +388,7 @@
 
     <!-- Zorluk seçim custom dropdown -->
     <div class="custom-dropdown" id="difficultyDropdown" data-type="difficulty">
-      <span class="selected-option">Kolay</span>
+      <span class="selected-option" data-value="easy">Kolay</span>
       <span class="chevron">&#9662;</span>
       <ul class="dropdown-options">
         <li data-value="easy">Kolay</li>
@@ -388,7 +416,7 @@
     <div id="tile-container"></div>
   </div>
 
-  <!-- En İyi Skorlar (Records) -->
+  <!-- En İyi Skorlar (Records) Paneli -->
   <div id="records-panel">
     <div>
       <strong>All-Time</strong>
@@ -528,11 +556,9 @@
       const selected = dropdown.querySelector('.selected-option');
       const optionsList = dropdown.querySelector('.dropdown-options');
       dropdown.addEventListener('click', (e) => {
-        // Toggle açık/kapalı durumu
         dropdown.classList.toggle('open');
         e.stopPropagation();
       });
-      // Her seçenek için click event ekle
       optionsList.querySelectorAll('li').forEach(option => {
         option.addEventListener('click', (e) => {
           selected.textContent = option.textContent;
@@ -542,7 +568,6 @@
         });
       });
     }
-    // Kapanması için tıklama dışı alan kontrolü:
     document.addEventListener('click', () => {
       document.querySelectorAll('.custom-dropdown.open').forEach(dd => dd.classList.remove('open'));
     });
@@ -850,11 +875,10 @@
       }
     }
 
-    /* --- Oyun Başlatma ve Tema Değiştirme --- */
+    /* --- Oyun Başlatma ve Tema İşlemleri --- */
     let game;
     function startNewGame() {
       pastGamesCurrentPage = 1;
-      // Custom dropdownlardan seçilen değerleri oku
       const gridDropdown = document.getElementById("gridDropdown");
       const difficultyDropdown = document.getElementById("difficultyDropdown");
       const size = parseInt(gridDropdown.querySelector('.selected-option').dataset.value || gridDropdown.querySelector('.selected-option').textContent.split("×")[0]);
@@ -872,7 +896,6 @@
       const saved = localStorage.getItem(STORAGE_KEY_STATE);
       if (saved) {
         const state = JSON.parse(saved);
-        // Custom dropdownların seçili değerlerini güncelle
         document.getElementById("gridDropdown").querySelector('.selected-option').textContent = state.size + "×" + state.size;
         document.getElementById("gridDropdown").querySelector('.selected-option').dataset.value = state.size;
         let diffText = "";
@@ -901,8 +924,8 @@
         showToast("Oyun başlamamış!");
       }
     });
-
-    /* --- Custom Dropdownlar için Init --- */
+    
+    /* --- Custom Dropdownlar Init --- */
     initCustomDropdown(document.getElementById("gridDropdown"));
     initCustomDropdown(document.getElementById("difficultyDropdown"));
 
