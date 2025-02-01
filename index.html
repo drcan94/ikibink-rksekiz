@@ -3,46 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2048 Benzeri Oyun</title>
+  <title>2048 Benzeri Oyun - Animasyonlu & Temalı</title>
   <style>
+    /* --- Tema ve temel değişkenler --- */
+    :root {
+      --bg-color: #faf8ef;
+      --text-color: #776e65;
+      --board-bg: #bbada0;
+      --grid-cell-bg: #cdc1b4;
+      --gap: 10px;
+      --cell-size: 80px;
+      --tile-2: #eee4da;
+      --tile-4: #ede0c8;
+      --tile-8: #f2b179;
+      --tile-16: #f59563;
+      --tile-32: #f67c5f;
+      --tile-64: #f65e3b;
+      --tile-128: #edcf72;
+      --tile-256: #edcc61;
+      --tile-512: #edc850;
+      --tile-1024: #edc53f;
+      --tile-2048: #edc22e;
+    }
+    .dark-theme {
+      --bg-color: #181818;
+      --text-color: #f9f6f2;
+      --board-bg: #3e3e3e;
+      --grid-cell-bg: #4a4a4a;
+    }
+    /* --- Genel stil --- */
     body {
+      margin: 0;
+      padding: 20px;
       font-family: Arial, sans-serif;
-      background: #faf8ef;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
-      margin: 0;
-      min-height: 100vh;
     }
     h1 {
+      margin-bottom: 10px;
+    }
+    #theme-toggle {
       margin-bottom: 10px;
     }
     #controls {
       margin-bottom: 15px;
       text-align: center;
     }
-    #board {
-      display: grid;
-      gap: 10px;
-      background: #bbada0;
-      padding: 10px;
-      border-radius: 10px;
+    /* --- Oyun alanı --- */
+    #board-container {
+      position: relative;
       margin-bottom: 15px;
-      touch-action: none; /* Dokunma davranışlarını engellemek için */
+      /* Genişlik/yükseklik dinamik olarak ayarlanacak */
     }
-    .cell {
-      background: #cdc1b4;
-      width: 80px;
-      height: 80px;
+    #grid-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--board-bg);
+      border-radius: 10px;
+      display: grid;
+      gap: var(--gap);
+      padding: var(--gap);
+    }
+    .grid-cell {
+      background-color: var(--grid-cell-bg);
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 5px;
+    }
+    /* Taşlar için container */
+    #tile-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    /* --- Taş (tile) stili ve animasyonlar --- */
+    .tile {
+      position: absolute;
+      width: var(--cell-size);
+      height: var(--cell-size);
       border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
       font-weight: bold;
-      color: #776e65;
+      font-size: 24px;
+      transition: all 0.2s ease-in-out;
     }
+    .tile-new {
+      animation: tile-appear 0.3s ease-out;
+    }
+    .tile-merge {
+      animation: tile-merge 0.3s ease-out;
+    }
+    @keyframes tile-appear {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    @keyframes tile-merge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    /* --- Taş Değerlerine Göre Renkler --- */
+    .tile-2 { background-color: var(--tile-2); color: var(--text-color); }
+    .tile-4 { background-color: var(--tile-4); color: var(--text-color); }
+    .tile-8 { background-color: var(--tile-8); color: #f9f6f2; }
+    .tile-16 { background-color: var(--tile-16); color: #f9f6f2; }
+    .tile-32 { background-color: var(--tile-32); color: #f9f6f2; }
+    .tile-64 { background-color: var(--tile-64); color: #f9f6f2; }
+    .tile-128 { background-color: var(--tile-128); color: #f9f6f2; font-size: 20px; }
+    .tile-256 { background-color: var(--tile-256); color: #f9f6f2; font-size: 20px; }
+    .tile-512 { background-color: var(--tile-512); color: #f9f6f2; font-size: 20px; }
+    .tile-1024 { background-color: var(--tile-1024); color: #f9f6f2; font-size: 18px; }
+    .tile-2048 { background-color: var(--tile-2048); color: #f9f6f2; font-size: 18px; }
+    /* --- Skor --- */
     #score {
       font-size: 20px;
     }
@@ -50,27 +133,39 @@
 </head>
 <body>
   <h1>2048 Benzeri Oyun</h1>
+  <div id="theme-toggle">
+    <button id="toggle-theme">Tema Değiştir</button>
+  </div>
   <div id="controls">
     <label for="gridSize">Grid Boyutu (örn. 4 için 4x4): </label>
     <input type="number" id="gridSize" value="4" min="3" max="8" />
     <button id="startButton">Oyunu Başlat</button>
   </div>
-  <div id="board"></div>
+  <div id="board-container">
+    <div id="grid-container"></div>
+    <div id="tile-container"></div>
+  </div>
   <div id="score">Skor: 0</div>
 
   <script>
     class Game2048 {
-      constructor(size, boardElement, scoreElement) {
+      constructor(size, boardContainer, gridContainer, tileContainer, scoreElement) {
         this.size = size;
-        this.boardElement = boardElement;
+        this.boardContainer = boardContainer;
+        this.gridContainer = gridContainer;
+        this.tileContainer = tileContainer;
         this.scoreElement = scoreElement;
         this.score = 0;
         this.board = [];
+        this.previousBoard = null;
+        this.setupBoard();
+        this.setupGrid();
         this.setup();
+        this.bindEvents();
       }
       
-      setup() {
-        // Oyun alanını (board) sıfırlayarak başlatıyoruz
+      setupBoard() {
+        // Board 2D dizisini sıfırlıyoruz
         this.board = [];
         for (let i = 0; i < this.size; i++) {
           let row = [];
@@ -81,13 +176,31 @@
         }
         this.score = 0;
         this.updateScore();
-        // Board container için grid sütun ayarı
-        this.boardElement.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
-        this.render();
-        // İlk olarak rastgele iki taş ekleniyor
+      }
+      
+      setupGrid() {
+        // Grid boyutlarını hesaplıyoruz: cellSize ve gap değerlerine göre
+        const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+        const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
+        const boardSize = this.size * cellSize + (this.size + 1) * gap;
+        this.boardContainer.style.width = boardSize + "px";
+        this.boardContainer.style.height = boardSize + "px";
+        // Grid container ayarı
+        this.gridContainer.style.gridTemplateColumns = `repeat(${this.size}, ${cellSize}px)`;
+        this.gridContainer.innerHTML = "";
+        for (let i = 0; i < this.size * this.size; i++) {
+          const cell = document.createElement("div");
+          cell.classList.add("grid-cell");
+          this.gridContainer.appendChild(cell);
+        }
+      }
+      
+      setup() {
+        this.setupBoard();
+        // Başlangıçta rastgele iki taş ekleniyor
         this.addRandomTile();
         this.addRandomTile();
-        this.render();
+        this.renderTiles();
       }
       
       addRandomTile() {
@@ -95,51 +208,86 @@
         for (let i = 0; i < this.size; i++) {
           for (let j = 0; j < this.size; j++) {
             if (this.board[i][j] === 0) {
-              empty.push({ x: i, y: j });
+              empty.push({ r: i, c: j });
             }
           }
         }
         if (empty.length === 0) return;
-        let index = Math.floor(Math.random() * empty.length);
-        let pos = empty[index];
-        // %90 olasılıkla 2, %10 olasılıkla 4 ekleniyor
-        this.board[pos.x][pos.y] = Math.random() < 0.9 ? 2 : 4;
-      }
-      
-      render() {
-        // Oyun alanını yeniden çiziyoruz
-        this.boardElement.innerHTML = "";
-        for (let i = 0; i < this.size; i++) {
-          for (let j = 0; j < this.size; j++) {
-            const cellDiv = document.createElement("div");
-            cellDiv.classList.add("cell");
-            if (this.board[i][j] !== 0) {
-              cellDiv.textContent = this.board[i][j];
-            }
-            this.boardElement.appendChild(cellDiv);
-          }
-        }
+        const pos = empty[Math.floor(Math.random() * empty.length)];
+        this.board[pos.r][pos.c] = Math.random() < 0.9 ? 2 : 4;
       }
       
       updateScore() {
         this.scoreElement.textContent = "Skor: " + this.score;
       }
       
+      bindEvents() {
+        // Klavye kontrolleri
+        document.addEventListener("keydown", (e) => {
+          switch(e.key) {
+            case "ArrowLeft":
+            case "a":
+            case "A":
+              this.move("left");
+              break;
+            case "ArrowRight":
+            case "d":
+            case "D":
+              this.move("right");
+              break;
+            case "ArrowUp":
+            case "w":
+            case "W":
+              this.move("up");
+              break;
+            case "ArrowDown":
+            case "s":
+            case "S":
+              this.move("down");
+              break;
+          }
+        });
+        // Mobil swipe desteği
+        let xDown = null, yDown = null;
+        document.addEventListener("touchstart", (evt) => {
+          const firstTouch = evt.touches[0];
+          xDown = firstTouch.clientX;
+          yDown = firstTouch.clientY;
+        }, false);
+        document.addEventListener("touchend", (evt) => {
+          if (!xDown || !yDown) return;
+          let xUp = evt.changedTouches[0].clientX;
+          let yUp = evt.changedTouches[0].clientY;
+          let xDiff = xDown - xUp;
+          let yDiff = yDown - yUp;
+          if (Math.abs(xDiff) > Math.abs(yDiff)) {
+            if (xDiff > 0) this.move("left");
+            else this.move("right");
+          } else {
+            if (yDiff > 0) this.move("up");
+            else this.move("down");
+          }
+          xDown = null;
+          yDown = null;
+        }, false);
+      }
+      
       move(direction) {
+        // Mevcut board durumunu kopyalayıp sonraki render için saklıyoruz
+        this.previousBoard = JSON.parse(JSON.stringify(this.board));
         let moved = false;
-        const prevBoard = JSON.stringify(this.board);
         switch(direction) {
           case "left":
             for (let i = 0; i < this.size; i++) {
-              const row = this.board[i];
-              const newRow = this.slideAndCombine(row);
+              let row = this.board[i];
+              let newRow = this.slideAndCombine(row);
               this.board[i] = newRow;
             }
             break;
           case "right":
             for (let i = 0; i < this.size; i++) {
-              const row = this.board[i].slice().reverse();
-              const newRow = this.slideAndCombine(row);
+              let row = this.board[i].slice().reverse();
+              let newRow = this.slideAndCombine(row);
               newRow.reverse();
               this.board[i] = newRow;
             }
@@ -150,7 +298,7 @@
               for (let i = 0; i < this.size; i++) {
                 col.push(this.board[i][j]);
               }
-              const newCol = this.slideAndCombine(col);
+              let newCol = this.slideAndCombine(col);
               for (let i = 0; i < this.size; i++) {
                 this.board[i][j] = newCol[i];
               }
@@ -162,7 +310,7 @@
               for (let i = this.size - 1; i >= 0; i--) {
                 col.push(this.board[i][j]);
               }
-              const newCol = this.slideAndCombine(col);
+              let newCol = this.slideAndCombine(col);
               newCol.reverse();
               for (let i = 0; i < this.size; i++) {
                 this.board[i][j] = newCol[i];
@@ -170,12 +318,12 @@
             }
             break;
         }
-        if (prevBoard !== JSON.stringify(this.board)) {
+        if (JSON.stringify(this.previousBoard) !== JSON.stringify(this.board)) {
           moved = true;
         }
         if (moved) {
           this.addRandomTile();
-          this.render();
+          this.renderTiles();
           this.updateScore();
           if (this.checkGameOver()) {
             setTimeout(() => {
@@ -186,14 +334,13 @@
       }
       
       slideAndCombine(array) {
-        // Sıfır olmayan değerleri sola kaydırıp, aynı sayılar birleştiriliyor
         let filtered = array.filter(val => val !== 0);
         for (let i = 0; i < filtered.length - 1; i++) {
           if (filtered[i] === filtered[i+1]) {
             filtered[i] *= 2;
             this.score += filtered[i];
             filtered[i+1] = 0;
-            i++; // Birleştirilmiş olan değerin tekrar birleştirilmesini önlemek için
+            i++; // İki defa birleştirmeyi engellemek için
           }
         }
         let newArray = filtered.filter(val => val !== 0);
@@ -204,7 +351,6 @@
       }
       
       checkGameOver() {
-        // Boş hücre varsa veya komşular eşitse hamle mümkündür
         for (let i = 0; i < this.size; i++) {
           for (let j = 0; j < this.size; j++) {
             if (this.board[i][j] === 0) return false;
@@ -214,87 +360,56 @@
         }
         return true;
       }
+      
+      renderTiles() {
+        // Tile container'ı temizliyoruz
+        this.tileContainer.innerHTML = "";
+        const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+        const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
+        for (let i = 0; i < this.size; i++) {
+          for (let j = 0; j < this.size; j++) {
+            if (this.board[i][j] !== 0) {
+              const tile = document.createElement("div");
+              tile.classList.add("tile");
+              // Taşın değeri için ilgili CSS sınıfı ekleniyor (örneğin "tile-2", "tile-4" vs.)
+              tile.classList.add("tile-" + this.board[i][j]);
+              tile.textContent = this.board[i][j];
+              // Taşın konumunu hesaplıyoruz
+              const left = gap + j * (cellSize + gap);
+              const top = gap + i * (cellSize + gap);
+              tile.style.left = left + "px";
+              tile.style.top = top + "px";
+              // Eğer önceki board’da bu hücrede taş yoksa, yeni eklenmiş animasyonunu ekliyoruz;
+              // Eğer önceki değer yarı değer olmuşsa (birleştirme) merge animasyonu ekliyoruz.
+              let previousVal = (this.previousBoard && this.previousBoard[i] ? this.previousBoard[i][j] : 0) || 0;
+              if (previousVal === 0) {
+                tile.classList.add("tile-new");
+              } else if (previousVal * 2 === this.board[i][j]) {
+                tile.classList.add("tile-merge");
+              }
+              this.tileContainer.appendChild(tile);
+            }
+          }
+        }
+      }
     }
     
     let game;
-    
-    // Başlat butonuna tıklayınca oyunu başlatıyoruz
     document.getElementById("startButton").addEventListener("click", () => {
-      let gridSize = parseInt(document.getElementById("gridSize").value);
+      const gridSizeInput = document.getElementById("gridSize");
+      let gridSize = parseInt(gridSizeInput.value);
       if (isNaN(gridSize) || gridSize < 3) gridSize = 4;
-      const boardElement = document.getElementById("board");
+      const boardContainer = document.getElementById("board-container");
+      const gridContainer = document.getElementById("grid-container");
+      const tileContainer = document.getElementById("tile-container");
       const scoreElement = document.getElementById("score");
-      game = new Game2048(gridSize, boardElement, scoreElement);
+      game = new Game2048(gridSize, boardContainer, gridContainer, tileContainer, scoreElement);
     });
     
-    // Klavye kontrolleri: ok tuşları veya WASD
-    document.addEventListener("keydown", (e) => {
-      if (!game) return;
-      switch (e.key) {
-        case "ArrowLeft":
-        case "a":
-        case "A":
-          game.move("left");
-          break;
-        case "ArrowRight":
-        case "d":
-        case "D":
-          game.move("right");
-          break;
-        case "ArrowUp":
-        case "w":
-        case "W":
-          game.move("up");
-          break;
-        case "ArrowDown":
-        case "s":
-        case "S":
-          game.move("down");
-          break;
-      }
+    // Dark/Light tema toggle
+    document.getElementById("toggle-theme").addEventListener("click", () => {
+      document.body.classList.toggle("dark-theme");
     });
-    
-    // Mobil dokunma (swipe) desteği
-    let xDown = null;
-    let yDown = null;
-    
-    document.addEventListener("touchstart", function(evt) {
-      const firstTouch = evt.touches[0];
-      xDown = firstTouch.clientX;
-      yDown = firstTouch.clientY;
-    }, false);
-    
-    document.addEventListener("touchend", function(evt) {
-      if (!xDown || !yDown) return;
-      const xUp = evt.changedTouches[0].clientX;
-      const yUp = evt.changedTouches[0].clientY;
-      const xDiff = xDown - xUp;
-      const yDiff = yDown - yUp;
-      
-      // Yatay mı dikey mi kaydırma olduğuna karar veriyoruz
-      if (Math.abs(xDiff) > Math.abs(yDiff)) {
-        // Yatay kaydırma
-        if (xDiff > 0) {
-          // Sol kaydırma
-          if (game) game.move("left");
-        } else {
-          // Sağ kaydırma
-          if (game) game.move("right");
-        }
-      } else {
-        // Dikey kaydırma
-        if (yDiff > 0) {
-          // Yukarı kaydırma
-          if (game) game.move("up");
-        } else {
-          // Aşağı kaydırma
-          if (game) game.move("down");
-        }
-      }
-      // Değerleri sıfırlıyoruz
-      xDown = null;
-      yDown = null;
-    }, false);
   </script>
 </body>
 </html>
