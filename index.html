@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gelişmiş 2048 Oyunu (Devamlılık & Sınırlı Touch)</title>
+  <title>Gelişmiş 2048 Oyunu (Toast Bildirimli)</title>
   <style>
     /* === Temel Tema Değişkenleri === */
     :root {
@@ -45,6 +45,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      position: relative;
     }
     h1 {
       margin-bottom: 5px;
@@ -170,6 +171,32 @@
       text-align: center;
       flex: 1;
     }
+    /* === Toast Bildirim Stilleri === */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      margin-top: 5px;
+      opacity: 0;
+      animation: fadein 0.4s forwards, fadeout 0.4s forwards 2.5s;
+    }
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeout {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(20px); }
+    }
   </style>
 </head>
 <body>
@@ -223,6 +250,9 @@
     <div id="tile-container"></div>
   </div>
 
+  <!-- Toast Bildirim Container -->
+  <div id="toast-container"></div>
+
   <script>
     /* --- LocalStorage ile skor ve oyun durumunun yönetimi --- */
     const STORAGE_KEY_SCORES = 'gameScores';
@@ -258,6 +288,18 @@
       document.getElementById('allTimeRecord').textContent = rec.allTime;
       document.getElementById('monthlyRecord').textContent = rec.monthly;
       document.getElementById('weeklyRecord').textContent = rec.weekly;
+    }
+    // --- Toast Bildirim Fonksiyonu ---
+    function showToast(message) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = message;
+      container.appendChild(toast);
+      // Bildirim animasyonları sayesinde otomatik olarak kaybolacaktır.
+      setTimeout(() => {
+        container.removeChild(toast);
+      }, 3000);
     }
 
     /* --- Oyun Sınıfı --- */
@@ -379,7 +421,7 @@
           const touch = evt.touches[0];
           let dx = touch.clientX - this.dragStart.x;
           let dy = touch.clientY - this.dragStart.y;
-          // Yalnızca belirgin eksene göre hareket ettir; maksimum 50px sınırla
+          // Yalnızca belirgin eksene göre hareket; maksimum 50px sınırla
           if (Math.abs(dx) > Math.abs(dy)) {
             dx = Math.max(Math.min(dx, 50), -50);
             dy = 0;
@@ -394,7 +436,7 @@
         this.boardContainer.addEventListener("touchend", (evt) => {
           if (!this.dragging) return;
           this.dragging = false;
-          const threshold = 20; // Hareket için minimum eşik
+          const threshold = 20;
           let direction = null;
           if (Math.abs(this.currentDragOffset.x) > Math.abs(this.currentDragOffset.y)) {
             if (this.currentDragOffset.x > threshold) direction = "right";
@@ -460,8 +502,9 @@
           this.updateScore();
           this.saveState();
           if (this.checkGameOver()) {
+            // Toast bildirim şeklinde "Oyun Bitti" mesajı verelim
             setTimeout(() => {
-              alert("Oyun Bitti! Skor: " + this.score);
+              showToast("Oyun Bitti! Skor: " + this.score);
               this.lastScoreEl.textContent = this.score;
               saveScore(this.score);
               updateRecordsUI();
@@ -537,7 +580,6 @@
       }
       
       loadState(savedState) {
-        // savedState: { size, difficulty, board, score, startTiles }
         this.size = savedState.size;
         this.difficulty = savedState.difficulty;
         this.startTiles = savedState.startTiles;
@@ -559,7 +601,6 @@
       const tileContainer = document.getElementById("tile-container");
       const scoreEl = document.getElementById("score");
       const lastScoreEl = document.getElementById("lastScore");
-      // Yeni oyun başlatırken önceki kayıtlı durumu temizleyelim
       localStorage.removeItem(STORAGE_KEY_STATE);
       game = new Game2048(size, difficulty, boardContainer, gridContainer, tileContainer, scoreEl, lastScoreEl);
       game.bindEvents();
@@ -568,10 +609,7 @@
       const saved = localStorage.getItem(STORAGE_KEY_STATE);
       if (saved) {
         const state = JSON.parse(saved);
-        // Sayfa içinde grid ve diğer container’ların boyutlarını güncellemek için,
-        // UI seçeneklerini saved state’e göre ayarlayabiliriz (opsiyonel)
         document.getElementById("gridSize").value = state.size;
-        // Varsayılan zorluk seçeneğini de ayarlayalım
         document.getElementById("difficulty").value = state.difficulty;
         const boardContainer = document.getElementById("board-container");
         const gridContainer = document.getElementById("grid-container");
