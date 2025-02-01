@@ -29,6 +29,7 @@
       padding: 10px;
       border-radius: 10px;
       margin-bottom: 15px;
+      touch-action: none; /* Dokunma davranışlarını engellemek için */
     }
     .cell {
       background: #cdc1b4;
@@ -217,7 +218,7 @@
     
     let game;
     
-    // Başlat butonuna tıklanınca oyunu başlatıyoruz
+    // Başlat butonuna tıklayınca oyunu başlatıyoruz
     document.getElementById("startButton").addEventListener("click", () => {
       let gridSize = parseInt(document.getElementById("gridSize").value);
       if (isNaN(gridSize) || gridSize < 3) gridSize = 4;
@@ -252,6 +253,48 @@
           break;
       }
     });
+    
+    // Mobil dokunma (swipe) desteği
+    let xDown = null;
+    let yDown = null;
+    
+    document.addEventListener("touchstart", function(evt) {
+      const firstTouch = evt.touches[0];
+      xDown = firstTouch.clientX;
+      yDown = firstTouch.clientY;
+    }, false);
+    
+    document.addEventListener("touchend", function(evt) {
+      if (!xDown || !yDown) return;
+      const xUp = evt.changedTouches[0].clientX;
+      const yUp = evt.changedTouches[0].clientY;
+      const xDiff = xDown - xUp;
+      const yDiff = yDown - yUp;
+      
+      // Yatay mı dikey mi kaydırma olduğuna karar veriyoruz
+      if (Math.abs(xDiff) > Math.abs(yDiff)) {
+        // Yatay kaydırma
+        if (xDiff > 0) {
+          // Sol kaydırma
+          if (game) game.move("left");
+        } else {
+          // Sağ kaydırma
+          if (game) game.move("right");
+        }
+      } else {
+        // Dikey kaydırma
+        if (yDiff > 0) {
+          // Yukarı kaydırma
+          if (game) game.move("up");
+        } else {
+          // Aşağı kaydırma
+          if (game) game.move("down");
+        }
+      }
+      // Değerleri sıfırlıyoruz
+      xDown = null;
+      yDown = null;
+    }, false);
   </script>
 </body>
 </html>
