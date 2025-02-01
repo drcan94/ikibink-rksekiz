@@ -32,9 +32,10 @@
       --tile-512: #edc850;
       --tile-1024: #edc53f;
       --tile-2048: #edc22e;
-      /* Özel select için */
+      /* Custom dropdown için */
       --select-bg: #fff;
       --select-border: #ccc;
+      --dropdown-zindex: 10;
     }
     .dark-theme {
       --bg-color: #181818;
@@ -68,47 +69,79 @@
       width: 100%;
       max-width: 500px;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 15px;
     }
-    #top-bar > * {
-      flex: 1 1 auto;
+    /* Tema toggle butonu – sadece ikon */
+    #themeToggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
     }
-    #top-bar label {
-      margin-right: 4px;
-      font-size: 0.9rem;
+    #themeToggle svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--text-color);
     }
-    /* Özel select görünümü */
-    select {
-      padding: 6px 8px;
-      font-size: 0.9rem;
+    /* Custom dropdown stilleri */
+    .custom-dropdown {
+      position: relative;
       border: 1px solid var(--select-border);
       border-radius: 4px;
       background-color: var(--select-bg);
-      color: var(--text-color);
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,<svg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='10'%20viewBox='0%200%2010%2010'><polygon%20fill='%23776e65'%20points='0,0%2010,0%205,7'/></svg>");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      background-size: 10px;
-    }
-    button {
-      padding: 8px 12px;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 4px;
-      background-color: #8f7a66;
-      color: #f9f6f2;
+      padding: 6px 30px 6px 8px;
       cursor: pointer;
-      transition: background-color 0.2s, box-shadow 0.2s;
+      user-select: none;
+      flex: 1;
+    }
+    .custom-dropdown .selected-option {
+      display: inline-block;
+      font-size: 0.9rem;
+    }
+    .custom-dropdown .chevron {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 0.8rem;
+    }
+    .custom-dropdown .dropdown-options {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      background-color: var(--select-bg);
+      border: 1px solid var(--select-border);
+      border-radius: 4px;
+      z-index: var(--dropdown-zindex);
+      display: none;
+      list-style: none;
+      padding: 4px 0;
+      margin: 0;
+    }
+    .custom-dropdown.open .dropdown-options {
+      display: block;
+    }
+    .custom-dropdown .dropdown-options li {
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .custom-dropdown .dropdown-options li:hover {
+      background-color: var(--grid-cell-bg);
+    }
+    /* Oyun butonları */
+    .game-buttons {
+      display: flex;
+      gap: 5px;
       flex-shrink: 0;
     }
-    button:hover {
-      background-color: #a0897b;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    .game-buttons button {
+      flex: none;
     }
 
     /* --- Oyun Alanı --- */
@@ -140,7 +173,7 @@
       display: grid;
       gap: var(--gap);
     }
-    /* Tile-container: taşlar hareket ediyorsa shift edilecek, grid sabit */
+    /* Tile-container: taşlar hareket ederken kayar; grid sabit */
     #tile-container {
       top: var(--gap);
       left: var(--gap);
@@ -205,7 +238,7 @@
       margin-bottom: 10px;
       font-size: 1rem;
     }
-    /* En iyi skorlar (records) artık ızgara altına taşındı */
+    /* En iyi skorlar (records) ızgara altına taşındı */
     #records-panel {
       width: 100%;
       max-width: 500px;
@@ -219,7 +252,7 @@
       flex: 1;
     }
 
-    /* --- Geçmiş Oyunlar Listesi --- */
+    /* --- Geçmiş Oyunlar Listesi ve Pagination --- */
     #past-games {
       width: 100%;
       max-width: 500px;
@@ -243,7 +276,6 @@
       display: flex;
       justify-content: space-between;
     }
-    /* Pagination butonları */
     #pastGamesPagination {
       display: flex;
       justify-content: center;
@@ -294,7 +326,7 @@
     /* --- Responsive Düzen --- */
     @media (min-width: 600px) {
       h1 { font-size: 2rem; }
-      button, select, input { font-size: 1rem; }
+      button, .custom-dropdown { font-size: 1rem; }
       #score-panel, #records-panel { font-size: 1.1rem; }
     }
   </style>
@@ -302,26 +334,43 @@
 <body>
   <h1>2048 Oyunu</h1>
 
-  <!-- Üst Menü -->
+  <!-- Üst Menü: Tema toggle, custom dropdown’lar ve oyun butonları -->
   <div id="top-bar">
-    <button id="toggle-theme">Tema Değiştir</button>
-    <div>
-      <label for="gridSize">Grid:</label>
-      <select id="gridSize">
-        <option value="3">3×3</option>
-        <option value="4" selected>4×4</option>
-        <option value="5">5×5</option>
-      </select>
+    <!-- Tema toggle: İkon şeklinde -->
+    <button id="themeToggle" title="Tema Değiştir">
+      <!-- Başlangıçta light mode: sun ikonu -->
+      <svg id="sunIcon" viewBox="0 0 24 24">
+        <path d="M6.76 4.84l-1.8-1.79-1.42 1.41 1.79 1.8 1.43-1.42zm10.48 0l1.79-1.8-1.42-1.41-1.8 1.79 1.43 1.42zm-4.24-2.84h-2v3h2V2zm0 16h-2v3h2v-3zm8-7h3v2h-3v-2zm-16 0H2v2h3v-2zm12.07 4.93l1.79 1.8 1.42-1.41-1.8-1.79-1.41 1.4zm-8.14 0l-1.8 1.79 1.42 1.41 1.79-1.8-1.41-1.4zM12 8a4 4 0 100 8 4 4 0 000-8z"/>
+      </svg>
+      <svg id="moonIcon" viewBox="0 0 24 24" style="display:none;">
+        <path d="M9.37 5.51A7 7 0 0012 19a7 7 0 006.49-9.37 1 1 0 00-1.22-.71 1 1 0 00-.74.95 5 5 0 11-6.28-6.28 1 1 0 00-.95-.74 1 1 0 00-.71 1.22z"/>
+      </svg>
+    </button>
+
+    <!-- Grid seçim custom dropdown -->
+    <div class="custom-dropdown" id="gridDropdown" data-type="grid">
+      <span class="selected-option">4×4</span>
+      <span class="chevron">&#9662;</span>
+      <ul class="dropdown-options">
+        <li data-value="3">3×3</li>
+        <li data-value="4">4×4</li>
+        <li data-value="5">5×5</li>
+      </ul>
     </div>
-    <div>
-      <label for="difficulty">Zorluk:</label>
-      <select id="difficulty">
-        <option value="easy" selected>Kolay</option>
-        <option value="medium">Orta</option>
-        <option value="hard">Zor</option>
-      </select>
+
+    <!-- Zorluk seçim custom dropdown -->
+    <div class="custom-dropdown" id="difficultyDropdown" data-type="difficulty">
+      <span class="selected-option">Kolay</span>
+      <span class="chevron">&#9662;</span>
+      <ul class="dropdown-options">
+        <li data-value="easy">Kolay</li>
+        <li data-value="medium">Orta</li>
+        <li data-value="hard">Zor</li>
+      </ul>
     </div>
-    <div style="display: flex; gap: 5px;">
+
+    <!-- Oyun butonları -->
+    <div class="game-buttons">
       <button id="startButton">Yeni Oyun</button>
       <button id="endGameButton">Oyunu Bitir</button>
     </div>
@@ -413,14 +462,11 @@
     /* --- Past Games Pagination --- */
     let pastGamesCurrentPage = 1;
     const pastGamesPerPage = 10;
-
     function updatePastGamesUI() {
       const scores = loadScores();
-      // Sıralamayı en yeni skor en üstte olacak şekilde yapalım:
       scores.sort((a, b) => b.time - a.time);
       const list = document.getElementById("pastGamesList");
       list.innerHTML = "";
-      // Pagination hesaplamaları:
       const totalPages = Math.ceil(scores.length / pastGamesPerPage);
       if(pastGamesCurrentPage > totalPages) pastGamesCurrentPage = totalPages;
       if(pastGamesCurrentPage < 1) pastGamesCurrentPage = 1;
@@ -435,12 +481,10 @@
       });
       updatePastGamesPagination(totalPages);
     }
-
     function updatePastGamesPagination(totalPages) {
       const container = document.getElementById("pastGamesPagination");
       container.innerHTML = "";
       if(totalPages <= 1) return;
-      // Önceki butonu
       const prevBtn = document.createElement("button");
       prevBtn.textContent = "Önceki";
       prevBtn.className = "pg-button";
@@ -450,12 +494,10 @@
         updatePastGamesUI();
       });
       container.appendChild(prevBtn);
-      // Sayfa numarası göstergesi
       const pageIndicator = document.createElement("span");
       pageIndicator.textContent = `${pastGamesCurrentPage} / ${totalPages}`;
       pageIndicator.style.alignSelf = "center";
       container.appendChild(pageIndicator);
-      // Sonraki butonu
       const nextBtn = document.createElement("button");
       nextBtn.textContent = "Sonraki";
       nextBtn.className = "pg-button";
@@ -481,6 +523,45 @@
       }, 3000);
     }
 
+    /* --- Custom Dropdown Fonksiyonları --- */
+    function initCustomDropdown(dropdown) {
+      const selected = dropdown.querySelector('.selected-option');
+      const optionsList = dropdown.querySelector('.dropdown-options');
+      dropdown.addEventListener('click', (e) => {
+        // Toggle açık/kapalı durumu
+        dropdown.classList.toggle('open');
+        e.stopPropagation();
+      });
+      // Her seçenek için click event ekle
+      optionsList.querySelectorAll('li').forEach(option => {
+        option.addEventListener('click', (e) => {
+          selected.textContent = option.textContent;
+          selected.dataset.value = option.dataset.value;
+          dropdown.classList.remove('open');
+          e.stopPropagation();
+        });
+      });
+    }
+    // Kapanması için tıklama dışı alan kontrolü:
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.custom-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    });
+
+    /* --- Tema Toggle --- */
+    function toggleTheme() {
+      document.body.classList.toggle('dark-theme');
+      const sunIcon = document.getElementById('sunIcon');
+      const moonIcon = document.getElementById('moonIcon');
+      if(document.body.classList.contains('dark-theme')) {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }
+    }
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
     /* --- Oyun Sınıfı --- */
     class Game2048 {
       constructor(size, difficulty, boardContainer, gridContainer, tileContainer, scoreEl, lastScoreEl, savedState = null) {
@@ -495,7 +576,6 @@
         this.dragStart = null;
         this.currentDragOffset = { x: 0, y: 0 };
         this.gameEnded = false;
-        // Zorluk ayarları
         if (this.difficulty === 'easy') {
           this.startTiles = 2;
           this.prob2 = 0.9;
@@ -532,7 +612,6 @@
       }
       
       setupGrid() {
-        // Board-container içindeki padding alanına göre grid hesaplanır.
         const containerWidth = this.boardContainer.clientWidth - 2 * parseInt(getComputedStyle(this.boardContainer).getPropertyValue('--gap'));
         const gap = parseInt(getComputedStyle(this.boardContainer).getPropertyValue('--gap'));
         this.cellSize = (containerWidth - (this.size - 1) * gap) / this.size;
@@ -581,7 +660,6 @@
               break;
           }
         });
-        // Dokunmatik kontroller
         this.boardContainer.addEventListener("touchstart", (evt) => {
           if (evt.touches.length !== 1 || this.gameEnded) return;
           this.dragging = true;
@@ -776,10 +854,11 @@
     let game;
     function startNewGame() {
       pastGamesCurrentPage = 1;
-      const gridSelect = document.getElementById("gridSize");
-      const difficultySelect = document.getElementById("difficulty");
-      const size = parseInt(gridSelect.value);
-      const difficulty = difficultySelect.value;
+      // Custom dropdownlardan seçilen değerleri oku
+      const gridDropdown = document.getElementById("gridDropdown");
+      const difficultyDropdown = document.getElementById("difficultyDropdown");
+      const size = parseInt(gridDropdown.querySelector('.selected-option').dataset.value || gridDropdown.querySelector('.selected-option').textContent.split("×")[0]);
+      const difficulty = difficultyDropdown.querySelector('.selected-option').dataset.value || difficultyDropdown.querySelector('.selected-option').textContent.toLowerCase();
       const boardContainer = document.getElementById("board-container");
       const gridContainer = document.getElementById("grid-container");
       const tileContainer = document.getElementById("tile-container");
@@ -793,8 +872,15 @@
       const saved = localStorage.getItem(STORAGE_KEY_STATE);
       if (saved) {
         const state = JSON.parse(saved);
-        document.getElementById("gridSize").value = state.size;
-        document.getElementById("difficulty").value = state.difficulty;
+        // Custom dropdownların seçili değerlerini güncelle
+        document.getElementById("gridDropdown").querySelector('.selected-option').textContent = state.size + "×" + state.size;
+        document.getElementById("gridDropdown").querySelector('.selected-option').dataset.value = state.size;
+        let diffText = "";
+        if(state.difficulty === "easy") diffText = "Kolay";
+        else if(state.difficulty === "medium") diffText = "Orta";
+        else diffText = "Zor";
+        document.getElementById("difficultyDropdown").querySelector('.selected-option').textContent = diffText;
+        document.getElementById("difficultyDropdown").querySelector('.selected-option').dataset.value = state.difficulty;
         const boardContainer = document.getElementById("board-container");
         const gridContainer = document.getElementById("grid-container");
         const tileContainer = document.getElementById("tile-container");
@@ -815,10 +901,11 @@
         showToast("Oyun başlamamış!");
       }
     });
-    document.getElementById("toggle-theme").addEventListener("click", () => {
-      document.body.classList.toggle("dark-theme");
-    });
-    
+
+    /* --- Custom Dropdownlar için Init --- */
+    initCustomDropdown(document.getElementById("gridDropdown"));
+    initCustomDropdown(document.getElementById("difficultyDropdown"));
+
     window.addEventListener("load", () => {
       updateRecordsUI();
       updatePastGamesUI();
