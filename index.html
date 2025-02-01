@@ -19,7 +19,6 @@
       --board-bg: #bbada0;
       --grid-cell-bg: #cdc1b4;
       --gap: 10px;
-      /* Not: gap değeri px cinsinden kullanılacak */
       --anim-duration: 0.2s;
       /* Taş renkleri */
       --tile-2: #eee4da;
@@ -33,12 +32,17 @@
       --tile-512: #edc850;
       --tile-1024: #edc53f;
       --tile-2048: #edc22e;
+      /* Özel select için */
+      --select-bg: #fff;
+      --select-border: #ccc;
     }
     .dark-theme {
       --bg-color: #181818;
       --text-color: #f9f6f2;
       --board-bg: #3e3e3e;
       --grid-cell-bg: #4a4a4a;
+      --select-bg: #444;
+      --select-border: #666;
     }
 
     /* --- Genel Stil (Mobile First) --- */
@@ -67,8 +71,8 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
       gap: 8px;
+      margin-bottom: 15px;
     }
     #top-bar > * {
       flex: 1 1 auto;
@@ -76,6 +80,20 @@
     #top-bar label {
       margin-right: 4px;
       font-size: 0.9rem;
+    }
+    /* Özel select görünümü */
+    select {
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      border: 1px solid var(--select-border);
+      border-radius: 4px;
+      background-color: var(--select-bg);
+      color: var(--text-color);
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,<svg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='10'%20viewBox='0%200%2010%2010'><polygon%20fill='%23776e65'%20points='0,0%2010,0%205,7'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 10px;
     }
     button {
       padding: 8px 12px;
@@ -85,17 +103,12 @@
       background-color: #8f7a66;
       color: #f9f6f2;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s, box-shadow 0.2s;
       flex-shrink: 0;
     }
     button:hover {
       background-color: #a0897b;
-    }
-    select, input[type="number"] {
-      padding: 6px;
-      font-size: 0.9rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     /* --- Oyun Alanı --- */
@@ -106,11 +119,10 @@
       background-color: var(--board-bg);
       border-radius: 10px;
       position: relative;
-      /* Board container içeriğinde uniform boşluk için padding */
       padding: var(--gap);
       margin-bottom: 15px;
     }
-    /* Grid ve taşların container’ları board-container içinde, padding sayesinde hizalanır */
+    /* Grid ve tile container’lar board-container içinde */
     #grid-container,
     #tile-container {
       position: absolute;
@@ -119,7 +131,7 @@
       right: 0;
       bottom: 0;
     }
-    /* Grid-container, board-container içindeki padding alanını doldurur */
+    /* Grid-container: board-container içindeki padding alanını kaplar */
     #grid-container {
       top: var(--gap);
       left: var(--gap);
@@ -128,7 +140,7 @@
       display: grid;
       gap: var(--gap);
     }
-    /* Tile-container aynı şekilde konumlanır */
+    /* Tile-container: taşlar hareket ediyorsa shift edilecek, grid sabit */
     #tile-container {
       top: var(--gap);
       left: var(--gap);
@@ -172,7 +184,6 @@
       50% { transform: scale(1.3); }
       100% { transform: scale(1); }
     }
-    /* Taş Renkleri */
     .tile-2 { background-color: var(--tile-2); color: var(--text-color); }
     .tile-4 { background-color: var(--tile-4); color: var(--text-color); }
     .tile-8 { background-color: var(--tile-8); color: #f9f6f2; }
@@ -186,12 +197,21 @@
     .tile-2048 { background-color: var(--tile-2048); color: #f9f6f2; font-size: 0.9rem; }
 
     /* --- Skor & Rekor Paneli --- */
-    #score-panel, #records-panel {
+    #score-panel {
       width: 100%;
       max-width: 500px;
       display: flex;
       justify-content: space-around;
       margin-bottom: 10px;
+      font-size: 1rem;
+    }
+    /* En iyi skorlar (records) artık ızgara altına taşındı */
+    #records-panel {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      justify-content: space-around;
+      margin-top: 10px;
       font-size: 1rem;
     }
     #records-panel div {
@@ -214,12 +234,34 @@
     }
     #past-games ul {
       list-style: none;
+      max-height: 300px;
+      overflow: hidden;
     }
     #past-games li {
       border-bottom: 1px solid #ddd;
       padding: 4px 0;
       display: flex;
       justify-content: space-between;
+    }
+    /* Pagination butonları */
+    #pastGamesPagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .pg-button {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 4px;
+      background-color: #8f7a66;
+      color: #f9f6f2;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .pg-button:hover {
+      background-color: #a0897b;
     }
 
     /* --- Toast Bildirim Stilleri --- */
@@ -249,7 +291,7 @@
       to { opacity: 0; transform: translateY(20px); }
     }
 
-    /* --- Responsive Düzen (Geniş ekranlarda ölçeklendirme) --- */
+    /* --- Responsive Düzen --- */
     @media (min-width: 600px) {
       h1 { font-size: 2rem; }
       button, select, input { font-size: 1rem; }
@@ -279,17 +321,25 @@
         <option value="hard">Zor</option>
       </select>
     </div>
-    <div>
+    <div style="display: flex; gap: 5px;">
       <button id="startButton">Yeni Oyun</button>
       <button id="endGameButton">Oyunu Bitir</button>
     </div>
   </div>
 
-  <!-- Skor & Rekor Panelleri -->
+  <!-- Skor Paneli -->
   <div id="score-panel">
     <div>Skor: <span id="score">0</span></div>
     <div>Son Oyun: <span id="lastScore">0</span></div>
   </div>
+
+  <!-- Oyun Alanı -->
+  <div id="board-container">
+    <div id="grid-container"></div>
+    <div id="tile-container"></div>
+  </div>
+
+  <!-- En İyi Skorlar (Records) -->
   <div id="records-panel">
     <div>
       <strong>All-Time</strong>
@@ -309,19 +359,14 @@
     </div>
   </div>
 
-  <!-- Oyun Alanı -->
-  <div id="board-container">
-    <div id="grid-container"></div>
-    <div id="tile-container"></div>
-  </div>
-
   <!-- Toast Bildirim Container -->
   <div id="toast-container"></div>
 
-  <!-- Geçmiş Oyunlar Listesi -->
+  <!-- Geçmiş Oyunlar Listesi ve Pagination -->
   <div id="past-games">
     <h3>Geçmiş Oyunlar</h3>
     <ul id="pastGamesList"></ul>
+    <div id="pastGamesPagination"></div>
   </div>
 
   <script>
@@ -365,17 +410,61 @@
       document.getElementById('dailyRecord').textContent = rec.daily;
     }
 
+    /* --- Past Games Pagination --- */
+    let pastGamesCurrentPage = 1;
+    const pastGamesPerPage = 10;
+
     function updatePastGamesUI() {
       const scores = loadScores();
+      // Sıralamayı en yeni skor en üstte olacak şekilde yapalım:
+      scores.sort((a, b) => b.time - a.time);
       const list = document.getElementById("pastGamesList");
       list.innerHTML = "";
-      scores.sort((a, b) => b.time - a.time);
-      scores.forEach(item => {
+      // Pagination hesaplamaları:
+      const totalPages = Math.ceil(scores.length / pastGamesPerPage);
+      if(pastGamesCurrentPage > totalPages) pastGamesCurrentPage = totalPages;
+      if(pastGamesCurrentPage < 1) pastGamesCurrentPage = 1;
+      const startIndex = (pastGamesCurrentPage - 1) * pastGamesPerPage;
+      const endIndex = startIndex + pastGamesPerPage;
+      const pageScores = scores.slice(startIndex, endIndex);
+      pageScores.forEach(item => {
         const li = document.createElement("li");
         const date = new Date(item.time);
         li.textContent = `${date.toLocaleString()} - Skor: ${item.score}`;
         list.appendChild(li);
       });
+      updatePastGamesPagination(totalPages);
+    }
+
+    function updatePastGamesPagination(totalPages) {
+      const container = document.getElementById("pastGamesPagination");
+      container.innerHTML = "";
+      if(totalPages <= 1) return;
+      // Önceki butonu
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "Önceki";
+      prevBtn.className = "pg-button";
+      prevBtn.disabled = pastGamesCurrentPage === 1;
+      prevBtn.addEventListener("click", () => {
+        pastGamesCurrentPage--;
+        updatePastGamesUI();
+      });
+      container.appendChild(prevBtn);
+      // Sayfa numarası göstergesi
+      const pageIndicator = document.createElement("span");
+      pageIndicator.textContent = `${pastGamesCurrentPage} / ${totalPages}`;
+      pageIndicator.style.alignSelf = "center";
+      container.appendChild(pageIndicator);
+      // Sonraki butonu
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Sonraki";
+      nextBtn.className = "pg-button";
+      nextBtn.disabled = pastGamesCurrentPage === totalPages;
+      nextBtn.addEventListener("click", () => {
+        pastGamesCurrentPage++;
+        updatePastGamesUI();
+      });
+      container.appendChild(nextBtn);
     }
 
     /* --- Toast Bildirim Fonksiyonu --- */
@@ -413,7 +502,7 @@
         } else if (this.difficulty === 'medium') {
           this.startTiles = 3;
           this.prob2 = 0.8;
-        } else { // hard
+        } else {
           this.startTiles = 4;
           this.prob2 = 0.7;
         }
@@ -443,13 +532,10 @@
       }
       
       setupGrid() {
-        // Grid-container alanı board-container'ın paddinglı iç alanı olarak ayarlandı.
-        // Bu alandan hücre boyutunu dinamik hesaplayalım.
+        // Board-container içindeki padding alanına göre grid hesaplanır.
         const containerWidth = this.boardContainer.clientWidth - 2 * parseInt(getComputedStyle(this.boardContainer).getPropertyValue('--gap'));
         const gap = parseInt(getComputedStyle(this.boardContainer).getPropertyValue('--gap'));
-        // Hücre boyutu: (containerWidth - (gridSize-1)*gap) / gridSize
         this.cellSize = (containerWidth - (this.size - 1) * gap) / this.size;
-        // Grid-container ayarları:
         this.gridContainer.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
       }
       
@@ -507,7 +593,6 @@
           const touch = evt.touches[0];
           let dx = touch.clientX - this.dragStart.x;
           let dy = touch.clientY - this.dragStart.y;
-          // Maksimum ±50px sınırlama
           if (Math.abs(dx) > Math.abs(dy)) {
             dx = Math.max(Math.min(dx, 50), -50);
             dy = 0;
@@ -632,14 +717,12 @@
       renderTiles() {
         this.tileContainer.innerHTML = "";
         const gap = parseInt(getComputedStyle(this.boardContainer).getPropertyValue('--gap'));
-        // Taşların konumunu, board-container içindeki içerik alanına göre hesaplayalım.
         for (let i = 0; i < this.size; i++) {
           for (let j = 0; j < this.size; j++) {
             if (this.board[i][j] !== 0) {
               const tile = document.createElement("div");
               tile.classList.add("tile", "tile-" + this.board[i][j]);
               tile.textContent = this.board[i][j];
-              // Konum: i ve j çarpanı olarak; hesaplanan cellSize ve gap kullanılacak.
               const left = j * (this.cellSize + gap);
               const top = i * (this.cellSize + gap);
               tile.style.width = this.cellSize + "px";
@@ -692,6 +775,7 @@
     /* --- Oyun Başlatma ve Tema Değiştirme --- */
     let game;
     function startNewGame() {
+      pastGamesCurrentPage = 1;
       const gridSelect = document.getElementById("gridSize");
       const difficultySelect = document.getElementById("difficulty");
       const size = parseInt(gridSelect.value);
